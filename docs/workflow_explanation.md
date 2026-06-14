@@ -5,6 +5,11 @@
 > kinetic captions → compiled reel. Published to GitHub (`Manshu555/Ai-video-generation-pipeline`,
 > code-only — secrets/photos/outputs are gitignored). This document is authoritative; it supersedes
 > the original auto-generated notes.
+>
+> **Verified end-to-end (2026-06-14):** faceless reel rendered for **story 1** (hardcoded script, all 5
+> scenes real Pexels footage) and for **story 2** via **Ollama** (LLM planned the script + per-scene
+> `stock_query` on the first attempt, all 5 scenes real Pexels footage). One caveat seen: edge-tts
+> transiently failed on 2 of story 2's scenes → silent fallback (see §8).
 
 ---
 
@@ -157,10 +162,10 @@ A detailed external diagnosis was reviewed. Here is how it maps to **what this p
 
 ### Problem 1 — "Story 1 looks great, other storylines degrade"
 **True, and the real mechanism is:** story 1 uses a **hardcoded, hand-directed screenplay**; stories
-2–9 go through **Ollama, which is currently offline** (connection refused on `:11434`), so they fall
-back to a **generic template** with weaker scene prompts. This matches the "first storyline accidentally
-matches the good distribution" intuition — but the concrete cause is the hardcoded script vs. the
-template, **not** image overfitting.
+2–9 go through **Ollama**. When Ollama is *offline* they fall back to a generic template (weaker scene
+prompts) — that was the original cause, **not** image overfitting. **With Ollama running** (see §8), the
+arbitrary-story path now produces a proper story-tailored script: verified on story 2 (5 scenes, valid
+JSON on the first attempt). So the fix is simply **keep Ollama up** (or wire a cloud LLM).
 - ✅ *Their A (image quality inconsistency)* did bite us: SD 1.5 collapsed to gray textures on
   grainy/over-long prompts → fixed in §2 #5.
 - ✅ *Their B (identity drift)* partially applies: speaking scenes use the **real reference photo**,
@@ -227,6 +232,14 @@ On any error it falls back to Ken Burns, so the reel never breaks.
 
 **UI:** `D:\round2_venv\Scripts\streamlit.exe run app.py` → http://localhost:8501
 
+**Ollama (needed only for non-hardcoded stories):** start the bundled server with
+`& "$env:LOCALAPPDATA\Programs\Ollama\ollama.exe" serve`. The model `llama3.2:3b` lives in the
+**default** location (`~/.ollama/models`) — do **not** set `OLLAMA_MODELS=D:\models\ollama` (that dir is
+empty; the server will report `{"models":[]}`). Confirm with `curl http://localhost:11434/api/tags`.
+
+**Stock footage (Pexels):** put `PEXELS_API_KEY=` in `.env` (free at pexels.com/api). With it set,
+every scene logs `Scene N OK (Pexels stock footage)`; without it, scenes fall back to Ken Burns.
+
 **Resume / partial re-render:** set `RESUME_SESSION="session_<ts>"` and `REUSE_CACHED_CLIPS=True` in
 `generate_video.py`; delete only the `clips/scene_XX.mp4` (and/or `images/scene_XX.png`) you want
 regenerated — cached files are reused via per-file existence checks.
@@ -236,6 +249,10 @@ regenerated — cached files are reused via per-file existence checks.
 - `[Image] ... Pollinations 402` → free Flux quota hit → falls back to SD 1.5.
 - `[SadTalker] inference failed ... retrying with fallback source` → first source had no detectable
   face; it retried the clean reference.
+- `[Audio] All TTS attempts failed, using silent audio for: ...` → **edge-tts transient network
+  failure** → that scene gets a silent track (B-roll + captions still show, but no narration). It's
+  intermittent; **fix:** delete the offending `audio/voice_XX.mp3` (the silent file is ~18 KB) and
+  re-run, or just re-render. (Seen on 2 of story 2's scenes.) An ElevenLabs key avoids edge-tts entirely.
 - `OSError: [WinError 6] The handle is invalid` at the very end → harmless MoviePy reader GC teardown.
 
 **Quick checks:**

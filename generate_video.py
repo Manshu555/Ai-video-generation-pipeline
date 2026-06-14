@@ -21,7 +21,7 @@ sys.path.insert(0, str(BASE_DIR))
 from config import STYLE_PRESETS, DEFAULT_STYLE, DEFAULT_TTS_VOICE, OUTPUTS_DIR
 
 # ── Story choice ──────────────────────────────────────────────────────────────
-STORY_ID  = 1           # 1=Dishwasher Steak (default — strong viral hook)
+STORY_ID  = 1           # 1=Dishwasher Steak (showcase — hardcoded script, works without Ollama)
 TONE      = "dramatic"
 STYLE_KEY = "cinematic"  # cinematic | pixar_3d | comic_book | flat_motion
 VOICE     = "en-US-GuyNeural"   # warm authoritative male narrator
