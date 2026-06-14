@@ -54,8 +54,9 @@ def _get_modelscope_pipe():
                 MODELSCOPE_REPO, torch_dtype=torch.float16, variant="fp16",
                 cache_dir=str(SDXL_CACHE_DIR),
             )
-        except Exception:
-            # fp16 variant not available — fall back to default weights in fp16
+        except Exception as e1:
+            # fp16 variant unavailable/failed — retry with default weights in fp16
+            print(f"[ModelScope] fp16-variant load failed ({e1!r}); retrying without variant...")
             pipe = DiffusionPipeline.from_pretrained(
                 MODELSCOPE_REPO, torch_dtype=torch.float16, cache_dir=str(SDXL_CACHE_DIR),
             )
@@ -68,7 +69,9 @@ def _get_modelscope_pipe():
         print("[ModelScope] Ready")
         return _ms_pipe
     except Exception as e:
-        print(f"[ModelScope] Load failed: {e}")
+        import traceback
+        print(f"[ModelScope] Load failed: {e!r}")
+        traceback.print_exc()
         _ms_failed = True
         return None
 

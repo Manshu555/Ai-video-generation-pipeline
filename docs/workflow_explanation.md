@@ -195,6 +195,13 @@ To use it:
    If you OOM on the 8 GB card, drop `MS_FRAMES` to 8. Quick single-scene preview: `python test_modelscope_scene.py`.
 On any error it falls back to Ken Burns, so the reel never breaks.
 
+> **RAM requirement (verified the hard way):** loading the 1.7B model needs roughly **8–10 GB of
+> *free system RAM*** during init. On this machine with only ~5.8 GB free, the OS **killed the load
+> process** (silent exit, no Python error) — and HF's xet downloader also panicked for the same reason
+> (`config.py` now sets `HF_HUB_DISABLE_XET=1`). The code is correct and the weights download fine; to
+> actually run ModelScope, **close other apps to free ~10 GB RAM**, then retry `test_modelscope_scene.py`
+> (weights are cached, so no re-download). Otherwise the action cascade simply uses Ken Burns.
+
 ---
 
 ## 8. Running & troubleshooting
