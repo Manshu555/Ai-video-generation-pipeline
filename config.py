@@ -22,6 +22,7 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 FAL_KEY = os.getenv("FAL_KEY", "")                      # fal.ai: Flux images, Kling i2v, Stable Audio
 ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY", "")  # premium narration + word timestamps
 HEDRA_API_KEY = os.getenv("HEDRA_API_KEY", "")            # Character-3 talking-photo lip-sync
+PEXELS_API_KEY = os.getenv("PEXELS_API_KEY", "")          # free stock B-roll footage (faceless flow)
 REPLICATE_API_TOKEN = os.getenv("REPLICATE_API_TOKEN", "")
 GOOGLE_DRIVE_CREDENTIALS_FILE = os.getenv("GOOGLE_DRIVE_CREDENTIALS_FILE", "credentials.json")
 
@@ -31,7 +32,12 @@ GOOGLE_DRIVE_CREDENTIALS_FILE = os.getenv("GOOGLE_DRIVE_CREDENTIALS_FILE", "cred
 # LOCAL MODE: fal balance exhausted + no ElevenLabs/Hedra keys, so run fully local
 # (SD 1.5 images, AnimateDiff/Ken Burns motion, SadTalker lip-sync, edge-tts voice).
 # Flip USE_CLOUD_PROVIDERS back to True after adding credits/keys to .env.
-USE_CLOUD_PROVIDERS = False
+USE_CLOUD_PROVIDERS = False   # paid AI (fal/Hedra/ElevenLabs) off; Pexels stock is independent
+# Visual mode for scenes:
+#   "stock"  = faceless B-roll — real Pexels stock footage + narration + kinetic captions,
+#              no character / no talking-head (recommended; reliable on this hardware)
+#   "ai"     = generate the AI character per scene (talking-head + AI motion cascade)
+VISUAL_MODE = "stock"
 PREFER_FAL_IMAGE = True     # Flux/Ideogram via fal.ai for stills (else local SDXL/SD1.5)
 PREFER_FAL_VIDEO = True     # Kling image-to-video for action scenes (else AnimateDiff/Ken Burns)
 PREFER_HEDRA = True         # Hedra Character-3 lip-sync for speaking scenes (else SadTalker)

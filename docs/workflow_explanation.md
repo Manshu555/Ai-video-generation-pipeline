@@ -1,8 +1,10 @@
 # AI Viral Reel Pipeline — Workflow & Full Change Log
 
-> **Status:** Redesigned 2026-06-13/14. This document is the authoritative description of
-> what the pipeline does *now* and everything that was changed in the redesign.
-> It supersedes the original auto-generated notes.
+> **Status:** Redesigned 2026-06-13/14. Default flow is now **faceless B-roll**
+> (`VISUAL_MODE="stock"`): your story text → narration plan → real Pexels stock footage +
+> kinetic captions → compiled reel. Published to GitHub (`Manshu555/Ai-video-generation-pipeline`,
+> code-only — secrets/photos/outputs are gitignored). This document is authoritative; it supersedes
+> the original auto-generated notes.
 
 ---
 
@@ -22,6 +24,17 @@ empty `.env`.
 The reference story is **"The Dishwasher Steak Heist"** (story id 1). It gets special treatment
 (see §4) because it's the showcase reel.
 
+**Default flow (faceless B-roll, `VISUAL_MODE="stock"`):**
+```
+your story text → LLM plans scenes + narration + a stock_query per scene (Ollama)
+              → Pexels stock footage per scene (cover-cropped to 1080×1920, fit to narration)
+              → edge-tts/ElevenLabs narration + word-synced kinetic captions
+              → color arc + hero-text climax + music arc → output.mp4
+```
+No character, no talking-head — narration over real B-roll. This is the most reliable look on an
+8 GB / RAM-limited machine and matches the classic "faceless" business-reel format. Set
+`VISUAL_MODE="ai"` to switch back to the AI-character + lip-sync flow.
+
 ---
 
 ## 2. Everything that was done in the redesign (change log)
@@ -39,6 +52,7 @@ The reference story is **"The Dishwasher Steak Heist"** (story id 1). It gets sp
 | 8 | AnimateDiff was slow (~50 s/step) / OOM | `release_image_pipeline()` frees the SD pipe + VRAM before the motion stage | `pipeline/image_generator.py`, `generate_video.py` |
 
 ### New capabilities added
+- **Faceless B-roll flow (Pexels stock footage)** — `pipeline/providers/pexels_provider.py` searches real vertical stock clips per scene (by `stock_query`), cover-crops to 1080×1920, fits to the narration length, and NVENC-encodes. Default visual source (`VISUAL_MODE="stock"`); independent of the paid-cloud switch (free key). Each scene now carries a `stock_query`; the Ollama prompt + template + normalizer all populate it. On any miss it falls back to Ken Burns on a still.
 - **ModelScope text-to-video engine** (`pipeline/modelscope_generator.py`) — `damo-vilab/text-to-video-ms-1.7b` as an **opt-in** action-scene motion engine (`USE_MODELSCOPE`, default off). Mirrors the AnimateDiff module (8 GB offload, NVENC). It's text-to-video (generates from the prompt, ignores the still) and 256×256/watermarked, so it sits *behind* Kling and above AnimateDiff in the action cascade and is off by default. See §7.
 - **Cloud-provider layer** (`pipeline/providers/`) — key-gated, fallback-safe clients:
   - `fal_provider.py` — Flux images, Kling image-to-video, Stable Audio music
@@ -62,8 +76,9 @@ The reference story is **"The Dishwasher Steak Heist"** (story id 1). It gets sp
 | 2 | **Style/Tone** | 4 styles × 3 tones (prompt control) | `config.py` |
 | 3 | **Images** | fal Flux · Pollinations Flux (free) · local SDXL · local SD 1.5 · PIL placeholder | `image_generator.py`, `providers/fal_provider.py` |
 | 4 | **Voice** | ElevenLabs (+ timestamps) · edge-tts (`WordBoundary`, rate `-5%`) · silent | `audio_generator.py`, `providers/eleven_provider.py` |
-| 5 | **Motion — speaking** | Hedra Character-3 · SadTalker (local) · Ken Burns | `video_generator.py`, `providers/hedra_provider.py`, `lipsync_generator.py` |
-| 5 | **Motion — action** | fal Kling image-to-video · ModelScope T2V *(opt-in)* · AnimateDiff *(disabled)* · Ken Burns on the still | `video_generator.py`, `providers/fal_provider.py`, `modelscope_generator.py` |
+| 5 | **Visual — faceless (DEFAULT, `VISUAL_MODE="stock"`)** | Pexels stock footage (by `stock_query`) · Ken Burns on a still (fallback) | `video_generator.py`, `providers/pexels_provider.py` |
+| 5 | **Motion — speaking** *(only `VISUAL_MODE="ai"`)* | Hedra Character-3 · SadTalker (local) · Ken Burns | `video_generator.py`, `providers/hedra_provider.py`, `lipsync_generator.py` |
+| 5 | **Motion — action** *(only `VISUAL_MODE="ai"`)* | fal Kling image-to-video · ModelScope T2V *(opt-in)* · AnimateDiff *(disabled)* · Ken Burns on the still | `video_generator.py`, `providers/fal_provider.py`, `modelscope_generator.py` |
 | 6 | **Music** | fal Stable Audio *(opt-in)* · bundled CC track · none | `assembler.py`, `audio_generator.py` |
 | 7 | **Assemble** | MoviePy v2 + NVENC: color arc · kinetic captions · hero text · title cards · crossfades · music arc | `assembler.py` |
 | 8 | **Export** | local file (`output.mp4`) · Google Drive upload (needs `credentials.json`) | `app.py`, `drive_uploader.py` |

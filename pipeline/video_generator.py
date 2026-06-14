@@ -165,6 +165,32 @@ def animate_scene(
 
     sn = scene["scene_number"]
 
+    # 0. FACELESS B-ROLL MODE — narration over real Pexels stock footage, no character.
+    #    Stock clip first; on any miss, fall back to Ken Burns on the still (still faceless,
+    #    no talking-head). Returns here, so the AI character/lip-sync paths are skipped.
+    from config import VISUAL_MODE
+    if VISUAL_MODE == "stock":
+        try:
+            from pipeline.providers.pexels_provider import fetch_stock_clip, pexels_available
+            query = scene.get("stock_query") or scene.get("visual_description", "")
+            if pexels_available() and fetch_stock_clip(query, out_path, dur):
+                print(f"[Video Gen] Scene {sn} OK (Pexels stock footage)")
+                return out_path
+        except Exception as e:
+            print(f"[Video Gen] Pexels path error: {e}")
+        scene_for_kb = dict(scene)
+        scene_for_kb["duration_seconds"] = dur
+        if _animate_ken_burns(image_path, scene_for_kb, out_path):
+            print(f"[Video Gen] Scene {sn} OK (Ken Burns fallback, faceless)")
+            return out_path
+        try:
+            from moviepy import ImageClip
+            ImageClip(str(image_path), duration=dur).write_videofile(
+                str(out_path), fps=VIDEO_FPS, codec="libx264", audio=False, logger=None)
+        except Exception as e:
+            print(f"[Video Gen] static fallback failed: {e}")
+        return out_path
+
     # 1a. Speaking scene -> Hedra Character-3 (cloud) -> SadTalker (local)
     if shot == "speaking":
         from config import PREFER_HEDRA

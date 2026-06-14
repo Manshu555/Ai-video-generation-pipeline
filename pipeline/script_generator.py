@@ -22,11 +22,14 @@ STRICT RULES:
 - The character ({character_description}) MUST appear in every scene.
 - camera_motion: pick one of: slow push-in | pan left | pan right | tilt up | static hold | zoom out
 - text_overlay: 3-5 words, ALL CAPS, punchy
+- stock_query: a 3-6 word literal visual phrase to search STOCK FOOTAGE for this scene's B-roll.
+    Use concrete, filmable nouns/scenes (e.g. "busy restaurant kitchen night", "empty office at dusk",
+    "hands typing laptop closeup"). NO character names, NO abstract concepts, NO text.
 - Emotional arc across the 5 scenes: hook -> conflict -> escalation -> lesson -> payoff/CTA
 - Output ONLY a valid JSON array. No markdown. No explanation. Nothing else.
 
 JSON format:
-[{{"scene_number":1,"duration_seconds":6,"shot_type":"speaking","visual_description":"...","voiceover_text":"...","camera_motion":"slow push-in","text_overlay":"THE HOOK","emotion":"tension"}},...]"""
+[{{"scene_number":1,"duration_seconds":6,"shot_type":"speaking","visual_description":"...","voiceover_text":"...","stock_query":"busy city street morning","camera_motion":"slow push-in","text_overlay":"THE HOOK","emotion":"tension"}},...]"""
 
 USER_PROMPT = """Story: {title}
 Hook: {hook}
@@ -70,6 +73,7 @@ _PORTRAIT = (
 _DISHWASHER_SCRIPT = [
     {
         "scene_number": 1, "shot_type": "speaking", "emotion": "tension",
+        "stock_query": "empty upscale restaurant interior evening",
         "duration_seconds": 5.5, "camera_motion": "slow push-in",
         "text_overlay": "THE HEIST", "hero_text": False, "music_attenuation": -28.0,
         "voiceover_text": "He built a successful construction company. Then he opened a restaurant. It was gone in eight months.",
@@ -80,6 +84,7 @@ _DISHWASHER_SCRIPT = [
     },
     {
         "scene_number": 2, "shot_type": "action", "emotion": "shock", "no_character": True,
+        "stock_query": "commercial restaurant kitchen night chef",
         "duration_seconds": 6.0, "camera_motion": "pan left",
         "text_overlay": "THE THEFT", "hero_text": False, "music_attenuation": -28.0,
         "voiceover_text": "Every night, his dishwasher threw premium steaks into the dumpster, to sneak back and steal them. Bob never knew.",
@@ -93,6 +98,7 @@ _DISHWASHER_SCRIPT = [
     },
     {
         "scene_number": 3, "shot_type": "action", "emotion": "dramatic",
+        "stock_query": "empty restaurant chairs on tables closed",
         "duration_seconds": 5.5, "camera_motion": "zoom out",
         "text_overlay": "THE COST", "hero_text": False, "music_attenuation": -28.0,
         "voiceover_text": "He was buried in the numbers. Too proud to truly know his own people. So he never saw it coming.",
@@ -104,6 +110,7 @@ _DISHWASHER_SCRIPT = [
     },
     {
         "scene_number": 4, "shot_type": "speaking", "emotion": "revelation",
+        "stock_query": "lone man silhouette window rain night moody",
         "duration_seconds": 4.5, "camera_motion": "static hold",
         "text_overlay": "", "hero_text": True, "music_attenuation": -50.0,
         "hero_line1": "HE DIDN'T HAVE A", "hero_line2": "EGO PROBLEM.",
@@ -115,6 +122,7 @@ _DISHWASHER_SCRIPT = [
     },
     {
         "scene_number": 5, "shot_type": "speaking", "emotion": "triumph",
+        "stock_query": "busy fine dining restaurant happy diners",
         "duration_seconds": 5.8, "camera_motion": "slow push-in",
         "text_overlay": "THE COMEBACK", "hero_text": False, "music_attenuation": -22.0,
         "voiceover_text": "He read every book on hospitality. He listened. His next restaurant earned rave reviews around the world.",
@@ -142,6 +150,11 @@ def _normalize(scenes: list[dict], story: dict) -> list[dict]:
         scene.setdefault("hero_text", False)
         scene.setdefault("music_attenuation", -28.0)
         scene.setdefault("motion_prompt", "")
+        # Stock-footage search phrase for the faceless B-roll flow; derive from the
+        # visual description if the LLM omitted it.
+        if not scene.get("stock_query"):
+            scene["stock_query"] = (scene.get("visual_description")
+                                    or scene.get("text_overlay") or "").strip()[:80]
         # Back-fill shot_type if missing: scene 1 + last two = speaking
         if scene.get("shot_type") not in ("speaking", "action"):
             scene["shot_type"] = "speaking" if (i == 0 or i >= n - 2) else "action"
@@ -161,15 +174,15 @@ def _normalize(scenes: list[dict], story: dict) -> list[dict]:
 def _template_script(story: dict) -> list[dict]:
     """Deterministic 5-scene fallback script when Ollama is unavailable."""
     templates = [
-        {"shot_type": "speaking", "visual_description": _PORTRAIT,
+        {"shot_type": "speaking", "visual_description": _PORTRAIT, "stock_query": "thoughtful entrepreneur looking out office window",
          "voiceover_text": story["hook"], "camera_motion": "slow push-in", "text_overlay": "THE HOOK", "emotion": "curiosity"},
-        {"shot_type": "action", "visual_description": f"{CHARACTER_DESCRIPTION} at a cluttered desk, head in hands, papers scattered, dim office, visibly stressed",
+        {"shot_type": "action", "visual_description": f"{CHARACTER_DESCRIPTION} at a cluttered desk, head in hands, papers scattered, dim office, visibly stressed", "stock_query": "stressed businessman cluttered desk dim office",
          "voiceover_text": "Everyone thought he had it all figured out. He was the very last one to realize that he didn't.", "camera_motion": "pan left", "text_overlay": "THE PROBLEM", "emotion": "tension"},
-        {"shot_type": "action", "visual_description": f"{CHARACTER_DESCRIPTION} pacing an empty room, gesturing in thought, moody dramatic shadows around him",
+        {"shot_type": "action", "visual_description": f"{CHARACTER_DESCRIPTION} pacing an empty room, gesturing in thought, moody dramatic shadows around him", "stock_query": "person walking alone city street night",
          "voiceover_text": "Then came the single moment that changed everything for him. One hard conversation he almost didn't have.", "camera_motion": "static hold", "text_overlay": "THE TURN", "emotion": "dramatic"},
-        {"shot_type": "speaking", "visual_description": _PORTRAIT,
+        {"shot_type": "speaking", "visual_description": _PORTRAIT, "stock_query": "sunrise over city skyline hopeful",
          "voiceover_text": story["core_lesson"], "camera_motion": "tilt up", "text_overlay": "THE LESSON", "emotion": "revelation"},
-        {"shot_type": "speaking", "visual_description": _PORTRAIT,
+        {"shot_type": "speaking", "visual_description": _PORTRAIT, "stock_query": "diverse team celebrating success office",
          "voiceover_text": "If you are building something right now, save this video. You will absolutely need it one day.", "camera_motion": "slow push-in", "text_overlay": "SAVE THIS", "emotion": "connection"},
     ]
     return [{"scene_number": i + 1, "duration_seconds": 6, **t} for i, t in enumerate(templates)]
