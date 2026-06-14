@@ -58,6 +58,9 @@ No character, no talking-head — narration over real B-roll. This is the most r
 | 6 | Speaking scenes showed a **second person** in frame | The reference photo `IMG_5950-edited.jpg` had a 2nd person at the right edge. Cropped a clean single-subject portrait → `assets/character_refs/bob_clean.jpg`; SadTalker now **prefers the clean reference first** | `assets/character_refs/bob_clean.jpg`, `config.py`, `pipeline/lipsync_generator.py` |
 | 7 | Local image quality ceiling | Reordered image cascade so **free Pollinations (Flux)** is tried before local SD 1.5 | `pipeline/image_generator.py` |
 | 8 | AnimateDiff was slow (~50 s/step) / OOM | `release_image_pipeline()` frees the SD pipe + VRAM before the motion stage | `pipeline/image_generator.py`, `generate_video.py` |
+| 9 | Some scenes rendered **silent** (B-roll, no narration, no captions) | Root cause was llama3.2:3b returning **empty `voiceover_text`**, not a TTS failure. `generate_script` now **rejects + retries** any Ollama script with an empty/<5-word voiceover (→ template if all fail); `_normalize` **back-fills** any empty voiceover from the story → no scene is ever silent | `pipeline/script_generator.py` |
+| 10 | edge-tts transient failures → silence; silent fallback wasn't re-tried on re-run | edge-tts retried in **4 rounds with backoff**; `generate_all_voiceovers` **self-heals** — a timings-less `voice_XX.mp3` (the ~18 KB silent file) is detected and regenerated | `pipeline/audio_generator.py` |
+| 11 | HF "xet" downloader panicked (`memory allocation failed`) | `config.py` sets `HF_HUB_DISABLE_XET=1` → standard HTTP downloader | `config.py` |
 
 ### New capabilities added
 - **Faceless B-roll flow (Pexels stock footage)** — `pipeline/providers/pexels_provider.py` searches real vertical stock clips per scene (by `stock_query`), cover-crops to 1080×1920, fits to the narration length, and NVENC-encodes. Default visual source (`VISUAL_MODE="stock"`); independent of the paid-cloud switch (free key). Each scene now carries a `stock_query`; the Ollama prompt + template + normalizer all populate it. On any miss it falls back to Ken Burns on a still.
@@ -114,7 +117,12 @@ SadTalker       Ken Burns       Ken Burns        SadTalker+hero     Ken Burns
 - Captions are **word-by-word**, newest word in gold, synced to the TTS word timings.
 - Total ≈ 38 s, **voice-driven** durations (no dead-air tails).
 
-The exact voiceover lines, image prompts, camera moves, emotions, `hero_text`, and
+> **Note on the engine row above:** it shows the `VISUAL_MODE="ai"` rendering (SadTalker/Ken Burns). In
+> the **default faceless mode** (`"stock"`), all five scenes instead use **Pexels B-roll** keyed by each
+> scene's `stock_query` — but the *creative design* (the cold→warm color arc, the word-synced captions,
+> and the S4 "EGO PROBLEM." hero-text climax over the footage) applies identically in both modes.
+
+The exact voiceover lines, image prompts, camera moves, emotions, `stock_query`, `hero_text`, and
 `music_attenuation` per scene live in `_DISHWASHER_SCRIPT` in `pipeline/script_generator.py`.
 
 ---
@@ -144,7 +152,8 @@ pipeline/providers/  (each: key-gated, returns None/False on any error — never
 ### Configuration (`config.py`)
 | Flag | Meaning |
 |------|---------|
-| `USE_CLOUD_PROVIDERS` | Master switch. **Currently `False`** (fal balance exhausted, no Eleven/Hedra keys) → fully local. |
+| `VISUAL_MODE` | **`"stock"`** = faceless Pexels B-roll (default); `"ai"` = AI character + lip-sync flow. |
+| `USE_CLOUD_PROVIDERS` | Master switch for **paid** AI (fal/Hedra/ElevenLabs). **Currently `False`** (fal exhausted, no Eleven/Hedra keys). Pexels is **independent** of this. |
 | `PREFER_FAL_IMAGE / FAL_VIDEO / HEDRA / ELEVENLABS / FAL_MUSIC` | Per-stage cloud preference. |
 | `USE_MODELSCOPE` | `False` — opt-in `damo-vilab/text-to-video-ms-1.7b` action engine (256×256, watermarked). See §7. |
 | `USE_ANIMATEDIFF` | `False` — action scenes use Ken Burns instead (see §2 #4). |
@@ -153,8 +162,9 @@ pipeline/providers/  (each: key-gated, returns None/False on any error — never
 | `CHARACTER_REF_IMAGE` | `assets/character_refs/bob_clean.jpg` (single-subject crop). |
 
 ### `.env` keys (all optional)
-`FAL_KEY` · `ELEVENLABS_API_KEY` · `HEDRA_API_KEY` (+ optional `ELEVENLABS_VOICE_ID`/`_MODEL`).
-Signup URLs are in `.env.example`.
+`PEXELS_API_KEY` (free — the default faceless flow's footage source) · `FAL_KEY` · `ELEVENLABS_API_KEY` ·
+`HEDRA_API_KEY` (+ optional `ELEVENLABS_VOICE_ID`/`_MODEL`). Signup URLs are in `.env.example`.
+The `.env` is **gitignored** — keys never get pushed.
 
 ---
 
@@ -167,8 +177,10 @@ A detailed external diagnosis was reviewed. Here is how it maps to **what this p
 **True, and the real mechanism is:** story 1 uses a **hardcoded, hand-directed screenplay**; stories
 2–9 go through **Ollama**. When Ollama is *offline* they fall back to a generic template (weaker scene
 prompts) — that was the original cause, **not** image overfitting. **With Ollama running** (see §8), the
-arbitrary-story path now produces a proper story-tailored script: verified on story 2 (5 scenes, valid
-JSON on the first attempt). So the fix is simply **keep Ollama up** (or wire a cloud LLM).
+arbitrary-story path produces a proper story-tailored script (verified on story 2). The local 3B model
+is inconsistent at strict JSON, so the generator **rejects + retries** and falls back to the template if
+all attempts fail — never silent, but sometimes generic. The real fix is **keep Ollama up** and/or wire a
+stronger LLM.
 - ✅ *Their A (image quality inconsistency)* did bite us: SD 1.5 collapsed to gray textures on
   grainy/over-long prompts → fixed in §2 #5.
 - ✅ *Their B (identity drift)* partially applies: speaking scenes use the **real reference photo**,
@@ -198,7 +210,7 @@ The genuinely portable lessons from that analysis that we **did** adopt:
 | Limitation | Why | How to fix |
 |------------|-----|------------|
 | Speaking face (real photo) ≠ action character (SD) | No local face-consistency engine | Add credit and use **Hedra** (lip-sync on a consistent portrait) + **fal Flux/Ideogram character-ref**; flip `USE_CLOUD_PROVIDERS=True` |
-| Custom stories get a generic script | **Ollama offline** | `ollama serve` (model `llama3.2:3b` is on `D:`), or wire a cloud LLM into `script_generator` |
+| Custom stories sometimes fall to the template | local **3B model is weak** at strict JSON (returns empty voiceovers / invalid JSON; pipeline rejects→retries→template) | Keep Ollama running (see §8), or wire a stronger/cloud LLM into `script_generator` |
 | No background music | `assets/music/` is empty | Drop an `.mp3` in `assets/music/`, or set `PREFER_FAL_MUSIC=True` with fal credit |
 | Action scenes are Ken Burns, not true motion | AnimateDiff disabled (8 GB ceiling) | Top up **fal** → Kling image-to-video (already wired), enable **ModelScope** (see below), or enable AnimateDiff on a bigger GPU |
 | Cloud visuals unavailable now | **fal balance exhausted**, Pollinations 402 | Top up fal at fal.ai/dashboard/billing |
@@ -269,7 +281,31 @@ regenerated — cached files are reused via per-file existence checks.
 
 ---
 
-## 9. Future / agentic direction (unchanged from original intent)
+## 9. Streamlit UI vs headless CLI — and reproducibility
+
+Both entry points (`app.py`, `generate_video.py`) call the **same** pipeline modules, and the faceless
+logic lives inside `video_generator.animate_scene` (gated by `VISUAL_MODE`), so **the Streamlit wizard
+produces the same faceless B-roll style as the CLI** — Pexels footage + narration + kinetic captions +
+color arc + hero text. They are *not* guaranteed to produce a byte-identical video, though:
+
+| Stage | Deterministic? | Notes |
+|-------|----------------|-------|
+| Story 1 script | ✅ | Hardcoded `_DISHWASHER_SCRIPT` — identical every run |
+| Stories 2–9 / custom script | ❌ | Ollama runs at temperature 0.7 → different narration + `stock_query` each run (may reject→template) |
+| Pexels footage | ⚠️ mostly | Best-match pick from a live search; can return a different clip if results change |
+| edge-tts voice, SD stills (seed 42), color/captions/assembly | ✅ | Same given the same script |
+
+**Takeaway:** for a reproducible reel, use **story 1** (deterministic script; only the stock clips may
+vary slightly). For Ollama-planned stories (e.g. the current `output.mp4`, which is story 2), a re-run
+yields a *different* script and footage by design. The current root `output.mp4` is the **story-2**
+faceless reel from the latest validation run.
+
+> **Known UI nit:** `app.py`'s Step-5 text and sidebar still say "SadTalker / AnimateDiff / SDXL / Ollama"
+> from before the redesign. The *output* is correctly faceless Pexels B-roll — only the labels are stale.
+
+---
+
+## 10. Future / agentic direction (unchanged from original intent)
 
 The modular step functions make a `QualityAgent` retry loop straightforward: after each stage, score
 the output (face visible? style consistent? duration right?) and **approve / retry-with-refined-prompt /
