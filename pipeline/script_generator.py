@@ -49,7 +49,11 @@ def _call_ollama(system: str, user: str) -> str:
             {"role": "user", "content": user},
         ],
         "stream": False,
-        "options": {"temperature": 0.7, "num_predict": 2048},
+        # format:"json" constrains the model to emit syntactically valid JSON —
+        # eliminates the "Expecting ',' delimiter" / property-name parse errors the
+        # 3B model produced. Lower temperature = steadier structure.
+        "format": "json",
+        "options": {"temperature": 0.4, "num_predict": 2048},
     }
     resp = requests.post(f"{OLLAMA_BASE_URL}/api/chat", json=payload, timeout=120)
     resp.raise_for_status()
@@ -221,12 +225,22 @@ def generate_script(story: dict, tone: str, style: dict, session_dir: Path) -> l
                 raw = re.sub(r"^```[a-z]*\n?", "", raw.strip())
                 raw = re.sub(r"\n?```$", "", raw)
 
-                # Extract JSON array
-                match = re.search(r"\[.*\]", raw, re.DOTALL)
-                if match:
-                    raw = match.group(0)
+                # Parse the whole response first; with format:"json" the model often
+                # wraps the scenes in an object (e.g. {"scenes":[...]} or a dict of
+                # scene objects). Fall back to extracting a bare [...] array.
+                try:
+                    parsed = json.loads(raw)
+                except Exception:
+                    m = re.search(r"\[.*\]", raw, re.DOTALL)
+                    parsed = json.loads(m.group(0)) if m else None
+                if isinstance(parsed, dict):
+                    lists = [v for v in parsed.values()
+                             if isinstance(v, list) and v and isinstance(v[0], dict)]
+                    if lists:
+                        parsed = max(lists, key=len)                  # {"scenes":[...]}
+                    elif parsed and all(isinstance(v, dict) for v in parsed.values()):
+                        parsed = list(parsed.values())                # {"s1":{...},...}
 
-                parsed = json.loads(raw)
                 # Accept only a well-formed script where EVERY scene has a real
                 # voiceover (>=5 words). llama3.2:3b sometimes emits scenes with an
                 # empty voiceover_text → silent B-roll with no captions. Reject &
