@@ -60,7 +60,7 @@ ELEVENLABS_MODEL = os.getenv("ELEVENLABS_MODEL", "eleven_multilingual_v2")
 
 # ── Local Ollama settings ─────────────────────────────────────────────────────
 OLLAMA_BASE_URL = "http://localhost:11434"
-OLLAMA_MODEL = "llama3.2:3b"          # Downloaded to D:\models\ollama
+OLLAMA_MODEL = "qwen2.5:7b"           # 7.6B — far more reliable at strict-JSON scripts than 3B
 OLLAMA_MODELS_DIR = "D:/models/ollama"
 
 # ── Local model storage (D: drive) ───────────────────────────────────────────

@@ -40,6 +40,32 @@ Tone: {tone} | Style: {style_label}
 Output the 5-scene JSON array now."""
 
 
+# Ollama structured-output schema: forces an ARRAY of exactly 5 scene objects with
+# the required fields. Plain format:"json" let the model emit a single object — the
+# schema guarantees the 5-scene array shape we parse downstream.
+_SCENE_ARRAY_SCHEMA = {
+    "type": "array",
+    "minItems": 5,
+    "maxItems": 5,
+    "items": {
+        "type": "object",
+        "properties": {
+            "scene_number": {"type": "integer"},
+            "duration_seconds": {"type": "integer"},
+            "shot_type": {"type": "string", "enum": ["speaking", "action"]},
+            "visual_description": {"type": "string"},
+            "voiceover_text": {"type": "string"},
+            "stock_query": {"type": "string"},
+            "camera_motion": {"type": "string"},
+            "text_overlay": {"type": "string"},
+            "emotion": {"type": "string"},
+        },
+        "required": ["scene_number", "shot_type", "visual_description",
+                     "voiceover_text", "stock_query", "text_overlay", "emotion"],
+    },
+}
+
+
 def _call_ollama(system: str, user: str) -> str:
     import requests
     payload = {
@@ -49,10 +75,9 @@ def _call_ollama(system: str, user: str) -> str:
             {"role": "user", "content": user},
         ],
         "stream": False,
-        # format:"json" constrains the model to emit syntactically valid JSON —
-        # eliminates the "Expecting ',' delimiter" / property-name parse errors the
-        # 3B model produced. Lower temperature = steadier structure.
-        "format": "json",
+        # Structured output: constrain to a 5-object array (not a single object or
+        # malformed JSON). Lower temperature = steadier structure.
+        "format": _SCENE_ARRAY_SCHEMA,
         "options": {"temperature": 0.4, "num_predict": 2048},
     }
     resp = requests.post(f"{OLLAMA_BASE_URL}/api/chat", json=payload, timeout=120)
