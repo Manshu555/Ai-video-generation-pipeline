@@ -1,0 +1,92 @@
+[
+  {
+    "id": 1,
+    "title": "The Dishwasher Steak Heist",
+    "hook": "His restaurant was failing... then he found out his dishwasher was throwing premium steaks in the dumpster.",
+    "core_lesson": "He didn't have a restaurant problem. He had an ego problem.",
+    "raw_story": "Bob owned a successful construction business for decades. In the 1990s, he turned his empty banquet hall into a full-service restaurant. He hired staff, bought equipment, and assumed the money would roll in. It was an absolute disaster. Construction allowed for $15,000 mistakes. Restaurants punished every spoiled tomato. His staff robbed him blind — waiters gave away free desserts for bigger tips, and his dishwasher threw premium steaks into the outdoor dumpster to retrieve them after his shift. Bleeding cash, Bob swallowed his ego and shut it down after eight months. Decades later, he tried again — this time with deep humility, reading Danny Meyer's hospitality philosophy and treating employees perfectly. He built a world-class restaurant that earned rave reviews.",
+    "tags": ["restaurant", "ego", "failure", "redemption", "business"],
+    "target_audience": "founders, entrepreneurs, small business owners",
+    "emotional_arc": "shock → recognition → lesson → hope"
+  },
+  {
+    "id": 2,
+    "title": "The $0 Book Launch That Became a Bestseller",
+    "hook": "He launched his book to crickets. No sales. No reviews. No audience. Then he did one thing differently.",
+    "core_lesson": "Most authors market their book like it's a product. The ones who win market it like it's a movement.",
+    "raw_story": "Marcus spent three years writing his business book. He had a great cover, a polished manuscript, and zero marketing plan. Launch day came. He sold 11 copies — 9 to family members. The book sat at rank #892,000 on Amazon. Defeated, he almost quit. Then a friend told him: stop selling the book, start selling the idea inside it. Marcus extracted the single most controversial claim from chapter 7 and turned it into a LinkedIn post. It went viral. 47,000 people read it in 48 hours. He linked to the book at the end. Within a week he was a Wall Street Journal bestseller.",
+    "tags": ["book launch", "author", "marketing", "viral", "content"],
+    "target_audience": "authors, coaches, consultants, creators",
+    "emotional_arc": "failure → despair → pivot → breakthrough"
+  },
+  {
+    "id": 3,
+    "title": "The Cold Email That Changed Everything",
+    "hook": "He sent 200 cold emails and got 0 replies. Then he changed one sentence and closed $240,000 in 30 days.",
+    "core_lesson": "People don't respond to what you offer. They respond to what they're afraid of losing.",
+    "raw_story": "David was a consultant who needed clients. He sent 200 cold emails leading with his credentials, his process, his results. Zero replies. He hired a copywriter who read the emails and said: 'You're talking about yourself the entire time. Nobody cares.' The copywriter rewrote the subject line and opening sentence to focus on a specific pain the prospect was experiencing right now. Response rate jumped from 0% to 14%. David closed five contracts in one month totaling $240,000. The only change: the email stopped being about David and started being about them.",
+    "tags": ["cold email", "sales", "copywriting", "consulting", "B2B"],
+    "target_audience": "consultants, salespeople, agency owners, B2B founders",
+    "emotional_arc": "frustration → humiliation → insight → explosion"
+  },
+  {
+    "id": 4,
+    "title": "The Speaking Fee Negotiation",
+    "hook": "She quoted $500 for a keynote. The client said yes immediately. That's when she realized her mistake.",
+    "core_lesson": "If they say yes too fast, you quoted too low. Price is just a story you tell yourself.",
+    "raw_story": "Sarah had been speaking at small events for free to build experience. When her first paid gig came, she panicked and said '$500' expecting pushback. The organizer said 'Perfect, done' without blinking. Sarah felt relieved — then felt sick. She realized they had a budget of $5,000 and she'd left $4,500 on the table because of her own fear. She spent the next year learning to anchor high. At her next event she said '$3,500' with total confidence. They countered at $2,800. She closed at $3,200. Four months later she was charging $8,500 per keynote.",
+    "tags": ["speaking", "pricing", "negotiation", "confidence", "author platform"],
+    "target_audience": "speakers, authors, coaches, thought leaders",
+    "emotional_arc": "relief → realization → shame → transformation"
+  },
+  {
+    "id": 5,
+    "title": "The Startup Pivot That Saved Everything",
+    "hook": "His startup had 3 days of runway left. The investor said no. Then his worst customer gave him the best advice.",
+    "core_lesson": "The pivot isn't failure. Refusing to pivot is.",
+    "raw_story": "James built a project management tool for law firms for 18 months. He had 12 paying customers and was running out of money. His final investor meeting ended with 'we'll pass.' On the drive home he called his most difficult customer — the one who complained constantly — to say goodbye. She said: 'I don't actually use it for project management. I use it to track which clients haven't paid me yet.' James asked three more customers. Same answer. He pivoted to accounts receivable in 72 hours, updated the landing page, and cold-emailed 50 law firms with the new positioning. Five converted in the first week. Two years later he sold the company for $4.1M.",
+    "tags": ["startup", "pivot", "founder", "product-market fit", "B2B SaaS"],
+    "target_audience": "startup founders, product builders, entrepreneurs",
+    "emotional_arc": "desperation → unexpected insight → bold action → victory"
+  },
+  {
+    "id": 6,
+    "title": "The Publishing Rejection That Built an Empire",
+    "hook": "27 publishers rejected her book. The 27th rejection letter said she 'didn't understand her audience.' That letter made her a millionaire.",
+    "core_lesson": "The gatekeepers are not the audience. Your audience is.",
+    "raw_story": "Rachel wrote a self-help book about career transitions for women over 40. She sent it to every major publisher. 27 rejections over two years. One rejection letter said her writing style was 'too conversational' and she 'clearly didn't understand how publishing works.' Furious, she self-published on Amazon with a $300 budget. She emailed 50 women in her network. They shared it. It hit #1 in its category in three days. She sold 60,000 copies in year one. A publisher called her — the same one that had rejected her — offering a $380,000 deal. She turned them down.",
+    "tags": ["publishing", "self-publishing", "author", "rejection", "woman entrepreneur"],
+    "target_audience": "aspiring authors, creators, women in business",
+    "emotional_arc": "repeated rejection → rage → defiance → triumph"
+  },
+  {
+    "id": 7,
+    "title": "The LinkedIn Post That Replaced a Salary",
+    "hook": "He posted on LinkedIn for 6 months with no results. Then post #47 changed his life forever.",
+    "core_lesson": "Consistency is the strategy. But only if you're learning from every post.",
+    "raw_story": "Tom was a 42-year-old marketing director who wanted to go independent. He posted on LinkedIn every day for six months. Most posts got 10-20 likes from colleagues. He almost quit. But he noticed that one post — about a mistake he'd made that cost a company $400,000 — had gotten 3,000 likes. He analyzed what was different: it was a specific number, a personal failure, and a counterintuitive lesson. He rewrote all future posts using that formula. Post #47 went viral with 180,000 impressions. Three inbound consulting inquiries came that week. He quit his job 30 days later.",
+    "tags": ["LinkedIn", "personal brand", "content creation", "consulting", "career change"],
+    "target_audience": "professionals, consultants, B2B content creators",
+    "emotional_arc": "grinding → near-quitting → pattern recognition → breakthrough"
+  },
+  {
+    "id": 8,
+    "title": "The Copywriting Secret Worth $2M",
+    "hook": "He was the worst copywriter at the agency. Then he stole a trick from a 1923 newspaper ad and became the highest-paid.",
+    "core_lesson": "Great copy isn't clever. It's specific. Every vague word you write costs you money.",
+    "raw_story": "Michael joined a marketing agency as a junior copywriter. His headlines were consistently rated the weakest by clients. His manager gave him a book of classic advertisements from the early 1900s as a joke. Michael read it obsessively. He noticed that the best ads from 1920s newspapers had one thing in common: brutal specificity. Not 'significant results' — '43% more sales in 11 days.' Not 'many customers' — '17,842 satisfied buyers.' He applied the same rule to every piece he wrote. His conversion rates doubled. Then doubled again. Within 18 months he was the agency's top earner. He now runs his own firm billing $2M annually.",
+    "tags": ["copywriting", "marketing", "advertising", "specificity", "career"],
+    "target_audience": "marketers, copywriters, business owners, content creators",
+    "emotional_arc": "humiliation → accidental discovery → application → dominance"
+  },
+  {
+    "id": 9,
+    "title": "The Amazon Algorithm Secret",
+    "hook": "His book was ranked #487,000 on Amazon. His competitor was ranked #3. They had the same book. Different strategy.",
+    "core_lesson": "Amazon doesn't reward the best book. It rewards the most reviewed book in the first 30 days.",
+    "raw_story": "Greg and his competitor both published books on leadership the same week. Within a month, the competitor was #3 in the category and Greg was buried at #487,000. Same topic, similar quality. Greg studied the difference. His competitor had built a 'launch team' of 200 readers who agreed to buy and review the book in the first two weeks. The early velocity signaled the algorithm that the book was hot. Greg had sent it to five friends. He relaunched with a proper ARC (advance review copy) strategy, recruited 180 readers from his email list six weeks early, coordinated the launch window, and hit #1 in two categories. The book never changed. The launch strategy did.",
+    "tags": ["Amazon", "book launch", "algorithm", "author strategy", "publishing"],
+    "target_audience": "authors, publishers, coaches who write books",
+    "emotional_arc": "confusion → discovery → study → execution → victory"
+  }
+]

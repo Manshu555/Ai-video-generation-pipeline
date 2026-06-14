@@ -1,0 +1,47 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDEs and Editors
+.vscode/
+.idea/
+.cph/
+*.swp
+*.swo
+
+# Project Specific
+outputs/
+output.mp4
+
+# Private assets — do NOT publish (personal photos / reference faces)
+assets/character_refs/
+IMG_*.jpg
+IMG_*.jpeg
+*.HEIC
+*.heic
+
+# Large / generated media & doc artifacts
+*.mp4
+*.pdf
+
+# Competitive-programming editor cache
+*.prob
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
