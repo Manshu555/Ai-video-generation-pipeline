@@ -130,18 +130,21 @@ def generate_voiceover(text: str, voice: str, output_path: Path) -> Path:
     except Exception as e:
         print(f"[Audio] ElevenLabs failed, falling back to edge-tts: {e}")
 
-    # 2. edge-tts (free) — collects WordBoundary events for kinetic captions
+    # 2. edge-tts (free) — collects WordBoundary events for kinetic captions.
+    #    edge-tts hits transient network/rate-limit errors, so retry in several
+    #    rounds over multiple voices with increasing backoff before giving up to
+    #    silence (each round = a fresh chance for the transient blip to clear).
     voices_to_try = [voice] + [v for v in FALLBACK_VOICES if v != voice]
-    for attempt_voice in voices_to_try:
-        for attempt in range(2):
+    for round_i in range(4):
+        for attempt_voice in voices_to_try:
             try:
                 timings = asyncio.run(_generate_voiceover_async(text, attempt_voice, output_path))
                 if output_path.exists() and output_path.stat().st_size > 1000:
                     _save_word_timings(output_path, timings)
                     return output_path
             except Exception as e:
-                print(f"[Audio] TTS failed ({attempt_voice}, attempt {attempt+1}): {e}")
-                time.sleep(2)
+                print(f"[Audio] TTS failed ({attempt_voice}, round {round_i+1}): {e}")
+        time.sleep(2 + 3 * round_i)   # backoff between rounds: 2s, 5s, 8s, 11s
 
     print(f"[Audio] All TTS attempts failed, using silent audio for: {text[:40]}...")
     return _make_silent_audio(output_path)
@@ -156,9 +159,15 @@ def generate_all_voiceovers(scenes: list[dict], voice: str, session_dir: Path) -
     for scene in scenes:
         text = scene.get("voiceover_text", "")
         out_path = audio_dir / f"voice_{scene['scene_number']:02d}.mp3"
-        if not out_path.exists() or out_path.stat().st_size < 2000:
+        # Regenerate when: missing, corrupt/tiny, OR there is real text but no word
+        # timings — a timings-less file is a prior SILENT fallback (the silent mp3 is
+        # ~18 KB, larger than the size threshold, so size alone won't catch it). This
+        # lets a re-run self-heal scenes that lost narration to a transient TTS failure.
+        missing = (not out_path.exists()) or out_path.stat().st_size < 2000
+        silent_fallback = bool(text.strip()) and not load_word_timings(out_path)
+        if missing or silent_fallback:
             if out_path.exists():
-                out_path.unlink()  # remove corrupt/empty file
+                out_path.unlink()  # remove corrupt/empty/silent file
             generate_voiceover(text, voice, out_path)
             print(f"[Audio] Scene {scene['scene_number']} voiceover OK")
         paths.append(out_path)

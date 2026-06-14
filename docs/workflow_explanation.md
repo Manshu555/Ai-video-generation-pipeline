@@ -8,8 +8,11 @@
 >
 > **Verified end-to-end (2026-06-14):** faceless reel rendered for **story 1** (hardcoded script, all 5
 > scenes real Pexels footage) and for **story 2** via **Ollama** (LLM planned the script + per-scene
-> `stock_query` on the first attempt, all 5 scenes real Pexels footage). One caveat seen: edge-tts
-> transiently failed on 2 of story 2's scenes → silent fallback (see §8).
+> `stock_query`, all 5 scenes real Pexels footage). **Bug found & fixed:** llama3.2:3b sometimes returns
+> scenes with an *empty* `voiceover_text` (→ silent B-roll, no captions). The script generator now
+> **rejects + retries** any Ollama script with an empty/too-short voiceover, the normalizer **back-fills**
+> any empty voiceover from the story, and the audio step **self-heals** timings-less voice files on
+> re-run (see §2/§8). Pipeline-level fixes — not hand-patched outputs.
 
 ---
 
@@ -249,10 +252,15 @@ regenerated — cached files are reused via per-file existence checks.
 - `[Image] ... Pollinations 402` → free Flux quota hit → falls back to SD 1.5.
 - `[SadTalker] inference failed ... retrying with fallback source` → first source had no detectable
   face; it retried the clean reference.
-- `[Audio] All TTS attempts failed, using silent audio for: ...` → **edge-tts transient network
-  failure** → that scene gets a silent track (B-roll + captions still show, but no narration). It's
-  intermittent; **fix:** delete the offending `audio/voice_XX.mp3` (the silent file is ~18 KB) and
-  re-run, or just re-render. (Seen on 2 of story 2's scenes.) An ElevenLabs key avoids edge-tts entirely.
+- `[Audio] All TTS attempts failed, using silent audio for: ...` → usually means that scene's
+  **`voiceover_text` was empty** (llama3.2:3b sometimes omits voiceovers). Now prevented upstream: the
+  script generator **rejects + retries** Ollama scripts with empty/short voiceovers and falls back to the
+  template if all attempts fail; the normalizer **back-fills** any empty voiceover. Genuine *transient*
+  edge-tts failures are retried in **4 rounds** with backoff, and `generate_all_voiceovers` **self-heals**
+  on re-run (a timings-less `voice_XX.mp3` is regenerated). An ElevenLabs key avoids edge-tts entirely.
+- `[Script] Attempt N: ... empty/too-short voiceover — retrying` / `Ollama failed, using template
+  script` → expected behavior when the local 3B model returns a weak/invalid script; the template
+  guarantees non-silent scenes. For better custom-story scripts, run a stronger LLM.
 - `OSError: [WinError 6] The handle is invalid` at the very end → harmless MoviePy reader GC teardown.
 
 **Quick checks:**

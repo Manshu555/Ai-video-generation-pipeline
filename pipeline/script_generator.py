@@ -140,9 +140,15 @@ def _normalize(scenes: list[dict], story: dict) -> list[dict]:
     n = len(scenes)
     for i, scene in enumerate(scenes):
         scene["scene_number"] = i + 1
-        # voiceover_text is consumed by app.py/audio — guarantee the key exists
+        # voiceover_text drives narration AND captions — it must never be empty,
+        # or the scene plays as silent B-roll with no captions. Back-fill from the
+        # story if the LLM left it blank (last-resort; the Ollama path also retries).
         scene["voiceover_text"] = (scene.get("voiceover_text")
                                    or scene.get("voiceover") or "").strip()
+        if not scene["voiceover_text"]:
+            scene["voiceover_text"] = (
+                story.get("core_lesson") or story.get("hook")
+                or scene.get("visual_description") or "").strip()
         scene.setdefault("duration_seconds", 6)
         scene.setdefault("camera_motion", "static hold")
         scene.setdefault("text_overlay", "")
@@ -220,10 +226,22 @@ def generate_script(story: dict, tone: str, style: dict, session_dir: Path) -> l
                 if match:
                     raw = match.group(0)
 
-                scenes = json.loads(raw)
-                if isinstance(scenes, list) and len(scenes) >= 4:
-                    print(f"[Script] Got {len(scenes)} scenes from Ollama")
-                    break
+                parsed = json.loads(raw)
+                # Accept only a well-formed script where EVERY scene has a real
+                # voiceover (>=5 words). llama3.2:3b sometimes emits scenes with an
+                # empty voiceover_text → silent B-roll with no captions. Reject &
+                # retry rather than ship that.
+                if isinstance(parsed, list) and len(parsed) >= 4:
+                    weak = [s for s in parsed
+                            if len((s.get("voiceover_text") or "").split()) < 5]
+                    if weak:
+                        print(f"[Script] Attempt {attempt+1}: {len(weak)} scene(s) had "
+                              f"empty/too-short voiceover — retrying")
+                        scenes = None
+                    else:
+                        scenes = parsed
+                        print(f"[Script] Got {len(scenes)} scenes from Ollama")
+                        break
             except Exception as e:
                 print(f"[Script] Attempt {attempt+1} failed: {e}")
                 time.sleep(3)
