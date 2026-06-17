@@ -445,14 +445,6 @@ Possible improvements include:
 
 ## License
 
-Add your preferred license here, such as MIT or Apache-2.0.
+This project is licensed under the MIT License.
 
 ---
-
-## Notes
-
-This README is written to explain both:
-- **how to set up and run the project**, and
-- **how the pipeline works internally**.
-
-That makes it easier for reviewers, recruiters, and future contributors to understand the system without reading every file first.
