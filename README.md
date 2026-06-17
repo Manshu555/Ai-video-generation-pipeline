@@ -1,4 +1,4 @@
-# AI Faceless Reel Generator
+# AI Reel Generator
 
 An end-to-end AI video pipeline that turns a short story into a **vertical, social-media-ready reel** with scene planning, voiceover, captions, visuals, background music, and final video assembly.
 
@@ -43,6 +43,7 @@ Instead of manually writing a script, searching for footage, recording narration
 
 The project is especially useful for:
 - faceless content creation,
+- Character talking generation,
 - viral-style business storytelling,
 - short reels for Instagram, TikTok, and YouTube Shorts,
 - demonstrating an AI-powered media workflow in an assignment or portfolio setting.
